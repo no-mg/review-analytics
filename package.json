@@ -78,5 +78,13 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/no-mg/review-analytics.git"
+  },
+  "bugs": {
+    "url": "https://github.com/no-mg/review-analytics/issues"
+  },
+  "homepage": "https://github.com/no-mg/review-analytics#readme"
 }

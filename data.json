@@ -1,0 +1,56 @@
+{
+  "topics": [
+    { "id": 1, "name": "Ипотека", "timeline": [
+        { "date": "2024-01-01", "positive": 5, "neutral": 2, "negative": 1 },
+        { "date": "2024-01-02", "positive": 8, "neutral": 3, "negative": 4 },
+        { "date": "2024-01-03", "positive": 12, "neutral": 5, "negative": 2 }
+      ]
+    },
+    { "id": 2, "name": "Карты", "timeline": [
+        { "date": "2024-01-01", "positive": 7, "neutral": 4, "negative": 2 },
+        { "date": "2024-01-02", "positive": 10, "neutral": 5, "negative": 3 },
+        { "date": "2024-01-03", "positive": 15, "neutral": 6, "negative": 4 }
+      ]
+    },
+    { "id": 3, "name": "Кредиты", "timeline": [
+        { "date": "2024-01-01", "positive": 3, "neutral": 1, "negative": 2 },
+        { "date": "2024-01-02", "positive": 4, "neutral": 2, "negative": 1 },
+        { "date": "2024-01-03", "positive": 5, "neutral": 3, "negative": 2 }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": 9321,
+      "topic_id": 1,
+      "date": "2024-01-03",
+      "sentiment": "negative",
+      "text": "Очень долго оформляется ипотека!",
+      "region": "Москва"
+    },
+    {
+      "id": 9322,
+      "topic_id": 1,
+      "date": "2024-01-03",
+      "sentiment": "negative",
+      "text": "Банк затянул с одобрением заявки.",
+      "region": "Санкт-Петербург"
+    },
+    {
+      "id": 9323,
+      "topic_id": 2,
+      "date": "2024-01-03",
+      "sentiment": "positive",
+      "text": "Очень удобно пользоваться картой банка.",
+      "region": "Москва"
+    },
+    {
+      "id": 9324,
+      "topic_id": 2,
+      "date": "2024-01-02",
+      "sentiment": "neutral",
+      "text": "Обслуживание карт нормальное, но есть комиссии.",
+      "region": "Санкт-Петербург"
+    }
+  ]
+}

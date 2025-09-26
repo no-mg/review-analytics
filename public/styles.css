@@ -4,6 +4,44 @@ body {
     color: #374151;
 }
 
+.thems {
+  color: #304f6c;
+}
+
+.topics-title {
+  color: #304f6c;
+}
+
+.topic-card.button {
+  background-color:  #43668c;
+  color: #e9eef1;
+  transition: background-color 0.2s;
+   border: 2px solid #45658b;
+}
+
+.topic-card.button.active {
+  background-color: #304f6c; 
+  color: #a0a1a6;
+}
+.topic-card.button:hover {
+  background-color: #304f6c;
+  border-color: #2b4a67;
+  color: #a0a1a6;
+}
+.topics-list {
+  background-color: #92b0ca;
+}
+
+.cancel-bytton {
+  background-color: #543523;
+  color: #b6a089;
+}
+
+.cancel-bytton:hover {
+  background-color: #3f2b22;
+  color: #795835;
+}
+
 .topic-card {
     padding: 1rem;
     border: 1px solid #e5e7eb;
@@ -13,14 +51,6 @@ body {
     cursor: pointer;
 }
 
-.topic-card:hover {
-    border-color: #3b82f6;
-}
-
-.topic-card.active {
-    background-color: #eff6ff;
-    border-color: #60a5fa;
-}
 
 #statistics-content, #trends-content {
     padding: 1rem;

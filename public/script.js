@@ -1,13 +1,10 @@
-// Chart instances
 let sentimentChart = null;
 let trendsChart = null;
 
-// DOM elements
 const topicsContainer = document.getElementById("topics-container");
 const topicsLoading = document.getElementById("topics-loading");
 const topicsError = document.getElementById("topics-error");
 
-const statisticsTitle = document.getElementById("statistics-title");
 const statisticsContent = document.getElementById("statistics-content");
 const statisticsLoading = document.getElementById("statistics-loading");
 const statisticsError = document.getElementById("statistics-error");
@@ -30,69 +27,169 @@ const trendsError = document.getElementById("trends-error");
 const trendsPlaceholder = document.getElementById("trends-placeholder");
 
 const applyFiltersBtn = document.getElementById("apply-filters");
+const resetSelectionBtn = document.getElementById("reset-selection");
+const chartTypeSelect = document.getElementById("chart-type");
 
-// DOM для отзывов
 const reviewsContainer = document.getElementById("reviews-container");
 const reviewsLoading = document.getElementById("reviews-loading");
 const reviewsError = document.getElementById("reviews-error");
 
-// Current selected topic
-let currentTopic = null;
+// Новый элемент для загрузки JSON
+const jsonFileInput = document.getElementById("json-file-input");
 
-// Format date to yyyy-mm-dd (для API)
-function formatApiDate(date) {
-  const d = String(date.getDate()).padStart(2, "0");
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const y = date.getFullYear();
-  return `${y}-${m}-${d}`;
-}
+// Данные из локального JSON
+let localData = null;
 
-// Format date to dd.mm.yyyy (для UI)
-function formatUiDate(date) {
-  const d = String(date.getDate()).padStart(2, "0");
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const y = date.getFullYear();
-  return `${d}.${m}.${y}`;
-}
+let selectedTopics = [];
 
-// Универсальная функция запроса
 async function fetchData(url) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Ошибка сети: ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    console.error("API error:", err);
-    throw err;
+  if (localData) {
+    // Используем локальные данные вместо fetch
+    return localData;
   }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Ошибка сети: ${res.status}`);
+  return await res.json();
 }
 
-// Initialize the app
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
   feather.replace();
   loadTopics();
 
-  // Set default dates (last 6 months)
   const endDate = new Date();
   const startDate = new Date();
   startDate.setMonth(endDate.getMonth() - 6);
+  document.getElementById("start-date").valueAsDate = startDate;
+  document.getElementById("end-date").valueAsDate = endDate;
 
-  document.getElementById("start-date").value = formatUiDate(startDate);
-  document.getElementById("end-date").value = formatUiDate(endDate);
-
-  // Apply filters button click handler
-  applyFiltersBtn.addEventListener("click", function () {
-    if (!currentTopic) {
-      alert("Выберите тему!");
+  applyFiltersBtn.addEventListener("click", () => {
+    if (selectedTopics.length === 0) {
+      alert("Функция в разработке: выберите хотя бы одну тему и загрузите JSON!");
       return;
     }
-    loadStatistics(currentTopic);
-    loadTrends(currentTopic);
-    loadReviews(currentTopic);
+    if (localData) {
+      loadStatisticsFromJSON(selectedTopics, localData);
+      selectedTopics.forEach((t) => {
+        loadTrendsFromJSON(t, localData);
+        loadReviewsFromJSON(t, localData);
+      });
+    } else {
+      selectedTopics.forEach((t) => {
+        loadStatisticsForMultiple(selectedTopics);
+        loadTrends(t);
+        loadReviews(t);
+      });
+    }
+  });
+
+  resetSelectionBtn.addEventListener("click", () => {
+    selectedTopics = [];
+    document.querySelectorAll(".topic-card").forEach((el) =>
+      el.classList.remove("active")
+    );
+    resetSelectionBtn.classList.add("hidden");
+
+    // Скрываем диаграмму
+    statisticsPlaceholder.classList.remove("hidden");
+    statisticsContent.classList.add("hidden");
+
+    // Скрываем график
+    trendsContent.classList.add("hidden");
+    trendsPlaceholder.classList.remove("hidden");
+
+    // Чистим отзывы
+    reviewsContainer.innerHTML = "";
+
+    // Уничтожаем графики
+    if (sentimentChart) {
+      sentimentChart.destroy();
+      sentimentChart = null;
+    }
+    if (trendsChart) {
+      trendsChart.destroy();
+      trendsChart = null;
+    }
+  });
+
+  chartTypeSelect.addEventListener("change", () => {
+    if (selectedTopics.length > 0) {
+      if (localData) {
+        loadStatisticsFromJSON(selectedTopics, localData);
+      } else {
+        loadStatisticsForMultiple(selectedTopics);
+      }
+    }
+  });
+
+  // Обработка загрузки локального JSON
+  jsonFileInput.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        localData = data; // сохраняем данные
+        processLocalData(localData);
+      } catch (err) {
+        alert("Ошибка при чтении JSON: " + err.message);
+      }
+    };
+    reader.readAsText(file);
   });
 });
 
-// Load topics list
+// ======== Функции для работы с локальным JSON ========
+
+function processLocalData(data) {
+  if (!data.topics || !data.reviews) {
+    alert("Некорректная структура JSON. Должны быть поля topics и reviews");
+    return;
+  }
+
+  // Загружаем темы
+  renderTopics(data.topics);
+
+  // Выбираем первую тему по умолчанию
+  if (data.topics.length > 0) {
+    selectedTopics = [data.topics[0]];
+    loadStatisticsFromJSON(selectedTopics, data);
+    loadReviewsFromJSON(selectedTopics[0], data);
+    loadTrendsFromJSON(selectedTopics[0], data);
+  }
+}
+
+function loadStatisticsFromJSON(topics, data) {
+  statisticsContent.classList.remove("hidden");
+  statisticsPlaceholder.classList.add("hidden");
+
+  const filtered = data.topics.filter((t) =>
+    topics.find((sel) => sel.id === t.id)
+  );
+  renderMultiStatistics(filtered);
+}
+
+function loadReviewsFromJSON(topic, data) {
+  const topicReviews = data.reviews.filter((r) => r.topic_id === topic.id);
+  renderReviews(topicReviews);
+}
+
+function loadTrendsFromJSON(topic, data) {
+  const timelineData = data.topics.find((t) => t.id === topic.id)?.timeline || [];
+  if (!timelineData || timelineData.length === 0) {
+    trendsContent.classList.add("hidden");
+    trendsPlaceholder.classList.remove("hidden");
+    if (trendsChart) {
+      trendsChart.destroy();
+      trendsChart = null;
+    }
+    return;
+  }
+  trendsContent.classList.remove("hidden");
+  renderTrends(topic.name, timelineData);
+}
+
 async function loadTopics() {
   topicsLoading.classList.remove("hidden");
   topicsError.classList.add("hidden");
@@ -109,28 +206,52 @@ async function loadTopics() {
   }
 }
 
-// Render topics list
 function renderTopics(topics) {
   topicsContainer.innerHTML = "";
 
   topics.forEach((topic) => {
     const topicElement = document.createElement("div");
-    topicElement.className = "topic-card cursor-pointer";
+    topicElement.className = "topic-card button cursor-pointer";
     topicElement.innerHTML = `
       <div class="flex items-center">
-        <i data-feather="file-text" class="mr-3 text-gray-500"></i>
-        <span class="font-medium text-gray-700">${topic.name}</span>
+        <i data-feather="file-text" class="mr-3"></i>
+        <span class="font-medium">${topic.name}</span>
       </div>
     `;
 
     topicElement.addEventListener("click", () => {
-      document.querySelectorAll(".topic-card").forEach((el) => el.classList.remove("active"));
-      topicElement.classList.add("active");
+      if (selectedTopics.find((t) => t.id === topic.id)) {
+        selectedTopics = selectedTopics.filter((t) => t.id !== topic.id);
+        topicElement.classList.remove("active");
+      } else {
+        selectedTopics.push(topic);
+        topicElement.classList.add("active");
+      }
 
-      currentTopic = topic;
-      loadStatistics(topic);
-      loadTrends(topic);
-      loadReviews(topic);
+      if (selectedTopics.length === 0) {
+        statisticsPlaceholder.classList.remove("hidden");
+        statisticsContent.classList.add("hidden");
+        resetSelectionBtn.classList.add("hidden");
+
+        trendsContent.classList.add("hidden");
+        trendsPlaceholder.classList.remove("hidden");
+
+        reviewsContainer.innerHTML = "";
+
+        if (sentimentChart) {
+          sentimentChart.destroy();
+          sentimentChart = null;
+        }
+        if (trendsChart) {
+          trendsChart.destroy();
+          trendsChart = null;
+        }
+      } else {
+        resetSelectionBtn.classList.remove("hidden");
+        loadStatisticsForMultiple(selectedTopics);
+        loadTrends(selectedTopics[0]);
+        loadReviews(selectedTopics[0]);
+      }
     });
 
     topicsContainer.appendChild(topicElement);
@@ -139,41 +260,53 @@ function renderTopics(topics) {
   feather.replace();
 }
 
-// Load statistics for selected topic
-async function loadStatistics(topic) {
-  statisticsContent.classList.add("hidden");
+async function loadStatisticsForMultiple(topics) {
+  statisticsContent.classList.remove("hidden");
   statisticsError.classList.add("hidden");
   statisticsPlaceholder.classList.add("hidden");
   statisticsLoading.classList.remove("hidden");
 
   if (sentimentChart) sentimentChart.destroy();
 
-  statisticsTitle.innerHTML = `<i data-feather="pie-chart" class="mr-2 text-blue-500"></i> Статистика: ${topic.name}`;
-
-  const startDate = document.getElementById("start-date").value.split(".").reverse().join("-");
-  const endDate = document.getElementById("end-date").value.split(".").reverse().join("-");
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
 
   try {
-    const data = await fetchData(`/topics/stats?date_from=${startDate}&date_to=${endDate}`);
-    const topicStats = data.topics.find((t) => t.id === topic.id);
+    const data = await fetchData(
+      `/topics/stats?date_from=${startDate}&date_to=${endDate}`
+    );
 
-    if (!topicStats) throw new Error("Нет данных по теме");
+    const filtered = data.topics.filter((t) =>
+      topics.find((sel) => sel.id === t.id)
+    );
 
     statisticsLoading.classList.add("hidden");
-    statisticsContent.classList.remove("hidden");
-    renderStatistics(topicStats.stats);
+    renderMultiStatistics(filtered);
   } catch {
     statisticsLoading.classList.add("hidden");
     statisticsError.classList.remove("hidden");
   }
 }
 
-// Render statistics
-function renderStatistics(stats) {
-  const total = stats.positive + stats.neutral + stats.negative;
-  const positive = stats.positive;
-  const neutral = stats.neutral;
-  const negative = stats.negative;
+function renderMultiStatistics(topicsStats) {
+  const total = topicsStats.reduce(
+    (sum, t) => sum + t.stats.positive + t.stats.neutral + t.stats.negative,
+    0
+  );
+
+  if (total === 0) {
+    statisticsContent.classList.add("hidden");
+    statisticsPlaceholder.classList.remove("hidden");
+    if (sentimentChart) {
+      sentimentChart.destroy();
+      sentimentChart = null;
+    }
+    return;
+  }
+
+  const positive = topicsStats.reduce((sum, t) => sum + t.stats.positive, 0);
+  const neutral = topicsStats.reduce((sum, t) => sum + t.stats.neutral, 0);
+  const negative = topicsStats.reduce((sum, t) => sum + t.stats.negative, 0);
 
   totalReviews.textContent = total;
   positiveCount.textContent = positive;
@@ -191,41 +324,55 @@ function renderStatistics(stats) {
   negativeBar.style.width = `${negativePct}%`;
   negativePercent.textContent = `${negativePct}%`;
 
+  const chartType = chartTypeSelect.value;
+
   const ctx = document.getElementById("sentimentChart").getContext("2d");
   sentimentChart = new Chart(ctx, {
-    type: "pie",
+    type: chartType,
     data: {
       labels: ["Положительные", "Нейтральные", "Отрицательные"],
-      datasets: [{
-        data: [positive, neutral, negative],
-        backgroundColor: ["#10B981", "#F59E0B", "#EF4444"],
-        hoverBackgroundColor: ["#22C55E", "#FBBF24", "#ff2949"],
-        borderWidth: 1,
-      }]
+      datasets: [
+        {
+          data: [positive, neutral, negative],
+          backgroundColor: ["#10B981", "#F59E0B", "#EF4444"],
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: "right", labels: { usePointStyle: true, padding: 20 } },
-      }
-    }
+        legend: { display: false },
+      },
+    },
   });
 }
 
-// Load trends data
 async function loadTrends(topic) {
   trendsContent.classList.add("hidden");
   trendsError.classList.add("hidden");
   trendsPlaceholder.classList.add("hidden");
   trendsLoading.classList.remove("hidden");
 
-  const startDate = document.getElementById("start-date").value.split(".").reverse().join("-");
-  const endDate = document.getElementById("end-date").value.split(".").reverse().join("-");
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
 
   try {
-    const data = await fetchData(`/topics/${topic.id}/timeline?date_from=${startDate}&date_to=${endDate}&group_by=day`);
+    const data = await fetchData(
+      `/topics/${topic.id}/timeline?date_from=${startDate}&date_to=${endDate}&group_by=day`
+    );
     trendsLoading.classList.add("hidden");
+
+    if (!data.timeline || data.timeline.length === 0) {
+      trendsContent.classList.add("hidden");
+      trendsPlaceholder.classList.remove("hidden");
+      if (trendsChart) {
+        trendsChart.destroy();
+        trendsChart = null;
+      }
+      return;
+    }
+
     trendsContent.classList.remove("hidden");
     renderTrends(topic.name, data.timeline);
   } catch {
@@ -234,10 +381,8 @@ async function loadTrends(topic) {
   }
 }
 
-// Render trends chart
 function renderTrends(topicName, timeline) {
   if (trendsChart) trendsChart.destroy();
-
   const ctx = document.getElementById("trendsChart").getContext("2d");
 
   trendsChart = new Chart(ctx, {
@@ -272,10 +417,6 @@ function renderTrends(topicName, timeline) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: `График динамики тональности по теме "${topicName}"`,
-        },
         legend: { position: "top" },
       },
       scales: {
@@ -285,18 +426,26 @@ function renderTrends(topicName, timeline) {
   });
 }
 
-// Load reviews
 async function loadReviews(topic) {
   reviewsContainer.innerHTML = "";
   reviewsLoading.classList.remove("hidden");
   reviewsError.classList.add("hidden");
 
-  const startDate = document.getElementById("start-date").value.split(".").reverse().join("-");
-  const endDate = document.getElementById("end-date").value.split(".").reverse().join("-");
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
 
   try {
-    const data = await fetchData(`/reviews?topic_id=${topic.id}&date_from=${startDate}&date_to=${endDate}&page=1&limit=10`);
+    const data = await fetchData(
+      `/reviews?topic_id=${topic.id}&date_from=${startDate}&date_to=${endDate}&page=1&limit=10`
+    );
     reviewsLoading.classList.add("hidden");
+
+    if (!data.reviews || data.reviews.length === 0) {
+      reviewsContainer.innerHTML =
+        `<p class="text-gray-500">Нет отзывов за выбранный период</p>`;
+      return;
+    }
+
     renderReviews(data.reviews);
   } catch {
     reviewsLoading.classList.add("hidden");
@@ -304,13 +453,8 @@ async function loadReviews(topic) {
   }
 }
 
-// Render reviews
 function renderReviews(reviews) {
-  if (!reviews || reviews.length === 0) {
-    reviewsContainer.innerHTML = `<p class="text-gray-500">Нет отзывов за выбранный период</p>`;
-    return;
-  }
-
+  reviewsContainer.innerHTML = "";
   reviews.forEach((review) => {
     const reviewEl = document.createElement("div");
     reviewEl.className = "p-4 mb-3 border rounded-lg bg-white shadow-sm";
@@ -318,9 +462,11 @@ function renderReviews(reviews) {
       <div class="flex justify-between mb-2">
         <span class="text-sm text-gray-500">${review.date} | ${review.region || "Регион не указан"}</span>
         <span class="px-2 py-1 rounded text-xs ${
-          review.sentiment === "positive" ? "bg-green-100 text-green-700" :
-          review.sentiment === "neutral" ? "bg-yellow-100 text-yellow-700" :
-          "bg-red-100 text-red-700"
+          review.sentiment === "positive"
+            ? "bg-green-100 text-green-700"
+            : review.sentiment === "neutral"
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-red-100 text-red-700"
         }">${review.sentiment}</span>
       </div>
       <p class="text-gray-800">${review.text}</p>
