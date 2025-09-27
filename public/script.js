@@ -34,19 +34,14 @@ const reviewsContainer = document.getElementById("reviews-container");
 const reviewsLoading = document.getElementById("reviews-loading");
 const reviewsError = document.getElementById("reviews-error");
 
-// Новый элемент для загрузки JSON
-const jsonFileInput = document.getElementById("json-file-input");
-
-// Данные из локального JSON
-let localData = null;
+const fileInput = document.getElementById("json-file-input");
+const detachJsonBtn = document.getElementById("detach-json");
+const downloadFileBtn = document.getElementById("download-btn"); // исправлено!
 
 let selectedTopics = [];
 
+// Универсальная загрузка данных с сервера
 async function fetchData(url) {
-  if (localData) {
-    // Используем локальные данные вместо fetch
-    return localData;
-  }
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Ошибка сети: ${res.status}`);
   return await res.json();
@@ -59,135 +54,72 @@ document.addEventListener("DOMContentLoaded", () => {
   const endDate = new Date();
   const startDate = new Date();
   startDate.setMonth(endDate.getMonth() - 6);
-  document.getElementById("start-date").valueAsDate = startDate;
-  document.getElementById("end-date").valueAsDate = endDate;
+
+  // формат даты дд.мм.гггг
+  ["start-date", "end-date"].forEach((id, idx) => {
+    const input = document.getElementById(id);
+    const d = idx === 0 ? startDate : endDate;
+    input.value = d.toLocaleDateString("ru-RU");
+    input.addEventListener("input", (e) => {
+      let value = e.target.value.replace(/\D/g, "").slice(0, 8);
+      if (value.length >= 5) {
+        e.target.value = `${value.slice(0, 2)}.${value.slice(
+          2,
+          4
+        )}.${value.slice(4)}`;
+      } else if (value.length >= 3) {
+        e.target.value = `${value.slice(0, 2)}.${value.slice(2)}`;
+      } else {
+        e.target.value = value;
+      }
+    });
+  });
 
   applyFiltersBtn.addEventListener("click", () => {
     if (selectedTopics.length === 0) {
-      alert("Функция в разработке: выберите хотя бы одну тему и загрузите JSON!");
+      alert("Выберите хотя бы одну тему!");
       return;
     }
-    if (localData) {
-      loadStatisticsFromJSON(selectedTopics, localData);
-      selectedTopics.forEach((t) => {
-        loadTrendsFromJSON(t, localData);
-        loadReviewsFromJSON(t, localData);
-      });
-    } else {
-      selectedTopics.forEach((t) => {
-        loadStatisticsForMultiple(selectedTopics);
-        loadTrends(t);
-        loadReviews(t);
-      });
-    }
+    alert("Функция фильтров в разработке");
+    loadStatisticsForMultiple(selectedTopics);
+    loadTrends(selectedTopics);
+    selectedTopics.forEach((t) => loadReviews(t));
   });
 
-  resetSelectionBtn.addEventListener("click", () => {
-    selectedTopics = [];
-    document.querySelectorAll(".topic-card").forEach((el) =>
-      el.classList.remove("active")
-    );
-    resetSelectionBtn.classList.add("hidden");
-
-    // Скрываем диаграмму
-    statisticsPlaceholder.classList.remove("hidden");
-    statisticsContent.classList.add("hidden");
-
-    // Скрываем график
-    trendsContent.classList.add("hidden");
-    trendsPlaceholder.classList.remove("hidden");
-
-    // Чистим отзывы
-    reviewsContainer.innerHTML = "";
-
-    // Уничтожаем графики
-    if (sentimentChart) {
-      sentimentChart.destroy();
-      sentimentChart = null;
-    }
-    if (trendsChart) {
-      trendsChart.destroy();
-      trendsChart = null;
-    }
-  });
+  resetSelectionBtn.addEventListener("click", clearSelection);
 
   chartTypeSelect.addEventListener("change", () => {
-    if (selectedTopics.length > 0) {
-      if (localData) {
-        loadStatisticsFromJSON(selectedTopics, localData);
-      } else {
-        loadStatisticsForMultiple(selectedTopics);
-      }
-    }
+    if (selectedTopics.length > 0) loadStatisticsForMultiple(selectedTopics);
   });
 
-  // Обработка загрузки локального JSON
-  jsonFileInput.addEventListener("change", (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const data = JSON.parse(e.target.result);
-        localData = data; // сохраняем данные
-        processLocalData(localData);
-      } catch (err) {
-        alert("Ошибка при чтении JSON: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-  });
+  fileInput.addEventListener("change", handleFileUpload);
+  detachJsonBtn.addEventListener("click", detachJsonFile);
+  downloadFileBtn.addEventListener("click", downloadJsonFile);
 });
 
-// ======== Функции для работы с локальным JSON ========
+function clearSelection() {
+  selectedTopics = [];
+  document
+    .querySelectorAll(".topic-card")
+    .forEach((el) => el.classList.remove("active"));
+  resetSelectionBtn.classList.add("hidden");
 
-function processLocalData(data) {
-  if (!data.topics || !data.reviews) {
-    alert("Некорректная структура JSON. Должны быть поля topics и reviews");
-    return;
+  statisticsPlaceholder.classList.remove("hidden");
+  statisticsContent.classList.add("hidden");
+
+  trendsContent.classList.add("hidden");
+  trendsPlaceholder.classList.remove("hidden");
+
+  reviewsContainer.innerHTML = "";
+
+  if (sentimentChart) {
+    sentimentChart.destroy();
+    sentimentChart = null;
   }
-
-  // Загружаем темы
-  renderTopics(data.topics);
-
-  // Выбираем первую тему по умолчанию
-  if (data.topics.length > 0) {
-    selectedTopics = [data.topics[0]];
-    loadStatisticsFromJSON(selectedTopics, data);
-    loadReviewsFromJSON(selectedTopics[0], data);
-    loadTrendsFromJSON(selectedTopics[0], data);
+  if (trendsChart) {
+    trendsChart.destroy();
+    trendsChart = null;
   }
-}
-
-function loadStatisticsFromJSON(topics, data) {
-  statisticsContent.classList.remove("hidden");
-  statisticsPlaceholder.classList.add("hidden");
-
-  const filtered = data.topics.filter((t) =>
-    topics.find((sel) => sel.id === t.id)
-  );
-  renderMultiStatistics(filtered);
-}
-
-function loadReviewsFromJSON(topic, data) {
-  const topicReviews = data.reviews.filter((r) => r.topic_id === topic.id);
-  renderReviews(topicReviews);
-}
-
-function loadTrendsFromJSON(topic, data) {
-  const timelineData = data.topics.find((t) => t.id === topic.id)?.timeline || [];
-  if (!timelineData || timelineData.length === 0) {
-    trendsContent.classList.add("hidden");
-    trendsPlaceholder.classList.remove("hidden");
-    if (trendsChart) {
-      trendsChart.destroy();
-      trendsChart = null;
-    }
-    return;
-  }
-  trendsContent.classList.remove("hidden");
-  renderTrends(topic.name, timelineData);
 }
 
 async function loadTopics() {
@@ -214,7 +146,7 @@ function renderTopics(topics) {
     topicElement.className = "topic-card button cursor-pointer";
     topicElement.innerHTML = `
       <div class="flex items-center">
-        <i data-feather="file-text" class="mr-3"></i>
+        <i data-feather="file-text" class="mr-3 text-gray-100"></i>
         <span class="font-medium">${topic.name}</span>
       </div>
     `;
@@ -229,27 +161,11 @@ function renderTopics(topics) {
       }
 
       if (selectedTopics.length === 0) {
-        statisticsPlaceholder.classList.remove("hidden");
-        statisticsContent.classList.add("hidden");
-        resetSelectionBtn.classList.add("hidden");
-
-        trendsContent.classList.add("hidden");
-        trendsPlaceholder.classList.remove("hidden");
-
-        reviewsContainer.innerHTML = "";
-
-        if (sentimentChart) {
-          sentimentChart.destroy();
-          sentimentChart = null;
-        }
-        if (trendsChart) {
-          trendsChart.destroy();
-          trendsChart = null;
-        }
+        clearSelection();
       } else {
         resetSelectionBtn.classList.remove("hidden");
         loadStatisticsForMultiple(selectedTopics);
-        loadTrends(selectedTopics[0]);
+        loadTrends(selectedTopics);
         loadReviews(selectedTopics[0]);
       }
     });
@@ -275,11 +191,9 @@ async function loadStatisticsForMultiple(topics) {
     const data = await fetchData(
       `/topics/stats?date_from=${startDate}&date_to=${endDate}`
     );
-
     const filtered = data.topics.filter((t) =>
       topics.find((sel) => sel.id === t.id)
     );
-
     statisticsLoading.classList.add("hidden");
     renderMultiStatistics(filtered);
   } catch {
@@ -325,7 +239,6 @@ function renderMultiStatistics(topicsStats) {
   negativePercent.textContent = `${negativePct}%`;
 
   const chartType = chartTypeSelect.value;
-
   const ctx = document.getElementById("sentimentChart").getContext("2d");
   sentimentChart = new Chart(ctx, {
     type: chartType,
@@ -341,14 +254,12 @@ function renderMultiStatistics(topicsStats) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-      },
+      plugins: { legend: { display: false } },
     },
   });
 }
 
-async function loadTrends(topic) {
+async function loadTrends(topics) {
   trendsContent.classList.add("hidden");
   trendsError.classList.add("hidden");
   trendsPlaceholder.classList.add("hidden");
@@ -358,13 +269,45 @@ async function loadTrends(topic) {
   const endDate = document.getElementById("end-date").value;
 
   try {
-    const data = await fetchData(
-      `/topics/${topic.id}/timeline?date_from=${startDate}&date_to=${endDate}&group_by=day`
-    );
-    trendsLoading.classList.add("hidden");
+    const datasets = [];
+    const labelsSet = new Set();
 
-    if (!data.timeline || data.timeline.length === 0) {
-      trendsContent.classList.add("hidden");
+    for (const topic of topics) {
+      const data = await fetchData(
+        `/topics/${topic.id}/timeline?date_from=${startDate}&date_to=${endDate}&group_by=day`
+      );
+
+      if (data.timeline && data.timeline.length > 0) {
+        data.timeline.forEach((p) => labelsSet.add(p.date));
+
+        datasets.push({
+          label: "Положительные",
+          data: data.timeline.map((p) => p.positive),
+          borderColor: "#10B981",
+          backgroundColor: "#10B98133",
+          fill: false,
+        });
+        datasets.push({
+          label: "Нейтральные",
+          data: data.timeline.map((p) => p.neutral),
+          borderColor: "#F59E0B",
+          backgroundColor: "#F59E0B33",
+          fill: false,
+        });
+        datasets.push({
+          label: "Отрицательные",
+          data: data.timeline.map((p) => p.negative),
+          borderColor: "#EF4444",
+          backgroundColor: "#EF444433",
+          fill: false,
+        });
+      }
+    }
+
+    const labels = Array.from(labelsSet).sort();
+
+    if (datasets.length === 0) {
+      trendsLoading.classList.add("hidden");
       trendsPlaceholder.classList.remove("hidden");
       if (trendsChart) {
         trendsChart.destroy();
@@ -373,57 +316,45 @@ async function loadTrends(topic) {
       return;
     }
 
+    if (trendsChart) trendsChart.destroy();
+    const ctx = document.getElementById("trendsChart").getContext("2d");
+    trendsChart = new Chart(ctx, {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "top",
+            labels: {
+              usePointStyle: true,
+              generateLabels: (chart) => {
+                return [
+                  { text: "Положительные", fillStyle: "#10B981" },
+                  { text: "Нейтральные", fillStyle: "#F59E0B" },
+                  { text: "Отрицательные", fillStyle: "#EF4444" },
+                ];
+              },
+            },
+          },
+          title: {
+            display: true,
+            text: `График тональности ${topics.length} ${
+              topics.length === 1 ? "темы" : "тем"
+            }`,
+          },
+        },
+        scales: { y: { beginAtZero: true } },
+      },
+    });
+
+    trendsLoading.classList.add("hidden");
     trendsContent.classList.remove("hidden");
-    renderTrends(topic.name, data.timeline);
   } catch {
     trendsLoading.classList.add("hidden");
     trendsError.classList.remove("hidden");
   }
-}
-
-function renderTrends(topicName, timeline) {
-  if (trendsChart) trendsChart.destroy();
-  const ctx = document.getElementById("trendsChart").getContext("2d");
-
-  trendsChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: timeline.map((t) => t.date),
-      datasets: [
-        {
-          label: "Положительные",
-          data: timeline.map((t) => t.positive),
-          borderColor: "#10B981",
-          backgroundColor: "rgba(16, 185, 129, 0.15)",
-          fill: true,
-        },
-        {
-          label: "Нейтральные",
-          data: timeline.map((t) => t.neutral),
-          borderColor: "#F59E0B",
-          backgroundColor: "rgba(245, 158, 11, 0.15)",
-          fill: true,
-        },
-        {
-          label: "Отрицательные",
-          data: timeline.map((t) => t.negative),
-          borderColor: "#EF4444",
-          backgroundColor: "rgba(239, 68, 68, 0.15)",
-          fill: true,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "top" },
-      },
-      scales: {
-        y: { beginAtZero: true },
-      },
-    },
-  });
 }
 
 async function loadReviews(topic) {
@@ -441,11 +372,9 @@ async function loadReviews(topic) {
     reviewsLoading.classList.add("hidden");
 
     if (!data.reviews || data.reviews.length === 0) {
-      reviewsContainer.innerHTML =
-        `<p class="text-gray-500">Нет отзывов за выбранный период</p>`;
+      reviewsContainer.innerHTML = `<p class="text-gray-500">Нет отзывов за выбранный период</p>`;
       return;
     }
-
     renderReviews(data.reviews);
   } catch {
     reviewsLoading.classList.add("hidden");
@@ -460,7 +389,9 @@ function renderReviews(reviews) {
     reviewEl.className = "p-4 mb-3 border rounded-lg bg-white shadow-sm";
     reviewEl.innerHTML = `
       <div class="flex justify-between mb-2">
-        <span class="text-sm text-gray-500">${review.date} | ${review.region || "Регион не указан"}</span>
+        <span class="text-sm text-gray-500">${review.date} | ${
+      review.region || "Регион не указан"
+    }</span>
         <span class="px-2 py-1 rounded text-xs ${
           review.sentiment === "positive"
             ? "bg-green-100 text-green-700"
@@ -473,4 +404,35 @@ function renderReviews(reviews) {
     `;
     reviewsContainer.appendChild(reviewEl);
   });
+}
+
+// ===== Работа с JSON-файлом (только загрузка/скачивание) =====
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  fetch("/upload", {
+    method: "POST",
+    body: formData,
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Ошибка загрузки файла");
+      detachJsonBtn.classList.remove("hidden");
+      downloadFileBtn.classList.remove("hidden");
+    })
+    .catch(() => alert("Ошибка при отправке JSON файла"));
+}
+
+function detachJsonFile() {
+  fileInput.value = "";
+  detachJsonBtn.classList.add("hidden");
+  downloadFileBtn.classList.add("hidden");
+}
+
+function downloadJsonFile() {
+  window.location.href = "/download";
 }

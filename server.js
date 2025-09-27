@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 
 const app = express();
 const PORT = 3000;
@@ -12,6 +14,10 @@ app.use(express.json());
 // --- Раздача статичных файлов (index.html, main.js, styles.css) ---
 app.use(express.static(path.join(__dirname, "public")));
 
+// --- Хранилище для загружаемого файла ---
+const upload = multer({ dest: "uploads/" });
+let lastUploadedFile = null;
+
 // --- 1. Список тем ---
 app.get("/topics", (req, res) => {
   res.json({
@@ -19,8 +25,8 @@ app.get("/topics", (req, res) => {
       { id: 1, name: "Ипотека" },
       { id: 2, name: "Карты" },
       { id: 3, name: "Кредиты" },
-      { id: 4, name: "Вклады" }
-    ]
+      { id: 4, name: "Вклады" },
+    ],
   });
 });
 
@@ -32,14 +38,14 @@ app.get("/topics/stats", (req, res) => {
       {
         id: 1,
         name: "Ипотека",
-        stats: { positive: 120, neutral: 45, negative: 35 }
+        stats: { positive: 120, neutral: 45, negative: 35 },
       },
       {
         id: 2,
         name: "Карты",
-        stats: { positive: 200, neutral: 80, negative: 60 }
-      }
-    ]
+        stats: { positive: 200, neutral: 80, negative: 60 },
+      },
+    ],
   });
 });
 
@@ -51,8 +57,8 @@ app.get("/topics/:id/timeline", (req, res) => {
     timeline: [
       { date: "2024-01-01", positive: 5, neutral: 2, negative: 1 },
       { date: "2024-01-02", positive: 8, neutral: 3, negative: 4 },
-      { date: "2024-01-03", positive: 12, neutral: 5, negative: 2 }
-    ]
+      { date: "2024-01-03", positive: 12, neutral: 5, negative: 2 },
+    ],
   });
 });
 
@@ -62,7 +68,7 @@ app.get("/reviews", (req, res) => {
     filters: {
       topic_id: Number(req.query.topic_id),
       sentiment: req.query.sentiment || "all",
-      period: { from: req.query.date_from, to: req.query.date_to }
+      period: { from: req.query.date_from, to: req.query.date_to },
     },
     pagination: { page: 1, limit: 10, total: 2 },
     reviews: [
@@ -71,17 +77,45 @@ app.get("/reviews", (req, res) => {
         date: "2024-01-03",
         sentiment: "negative",
         text: "Очень долго оформляется ипотека!",
-        region: "Москва"
+        region: "Москва",
       },
       {
         id: 9322,
         date: "2024-01-03",
         sentiment: "negative",
         text: "Банк затянул с одобрением заявки.",
-        region: "Санкт-Петербург"
-      }
-    ]
+        region: "Санкт-Петербург",
+      },
+    ],
   });
+});
+
+// --- 5. Загрузка JSON файла ---
+app.post("/upload", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "Файл не найден" });
+  }
+
+  const targetPath = path.join(__dirname, "uploads", "uploaded.json");
+
+  // Перезаписываем файл с фиксированным именем
+  fs.rename(req.file.path, targetPath, (err) => {
+    if (err) {
+      console.error("Ошибка сохранения файла:", err);
+      return res.status(500).json({ error: "Ошибка при сохранении файла" });
+    }
+
+    lastUploadedFile = targetPath;
+    res.json({ message: "Файл успешно загружен" });
+  });
+});
+
+// --- 6. Скачивание JSON файла ---
+app.get("/download", (req, res) => {
+  if (!lastUploadedFile || !fs.existsSync(lastUploadedFile)) {
+    return res.status(404).json({ error: "Файл не найден" });
+  }
+  res.download(lastUploadedFile, "result.json");
 });
 
 // --- Запуск сервера ---

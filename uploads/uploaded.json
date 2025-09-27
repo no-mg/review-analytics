@@ -1,0 +1,92 @@
+{
+  "topics": [
+    { "id": 1, "name": "Ипотека" },
+    { "id": 2, "name": "Карты" },
+    { "id": 3, "name": "Кредиты" },
+    { "id": 4, "name": "Вклады" }
+  ],
+  "stats": {
+    "period": { "from": "2024-01-01", "to": "2024-01-31" },
+    "topics": [
+      { "id": 1, "name": "Ипотека", "stats": { "positive": 120, "neutral": 45, "negative": 35 } },
+      { "id": 2, "name": "Карты", "stats": { "positive": 200, "neutral": 80, "negative": 60 } },
+      { "id": 3, "name": "Кредиты", "stats": { "positive": 150, "neutral": 65, "negative": 40 } },
+      { "id": 4, "name": "Вклады", "stats": { "positive": 95, "neutral": 30, "negative": 20 } }
+    ]
+  },
+  "timelines": {
+    "1": {
+      "topic": { "id": 1, "name": "Ипотека" },
+      "timeline": [
+        { "date": "2024-01-01", "positive": 5, "neutral": 2, "negative": 1 },
+        { "date": "2024-01-02", "positive": 8, "neutral": 3, "negative": 4 },
+        { "date": "2024-01-03", "positive": 12, "neutral": 5, "negative": 2 },
+        { "date": "2024-01-04", "positive": 15, "neutral": 6, "negative": 3 },
+        { "date": "2024-01-05", "positive": 20, "neutral": 7, "negative": 5 }
+      ]
+    },
+    "2": {
+      "topic": { "id": 2, "name": "Карты" },
+      "timeline": [
+        { "date": "2024-01-01", "positive": 10, "neutral": 4, "negative": 2 },
+        { "date": "2024-01-02", "positive": 14, "neutral": 6, "negative": 5 },
+        { "date": "2024-01-03", "positive": 18, "neutral": 7, "negative": 4 },
+        { "date": "2024-01-04", "positive": 22, "neutral": 9, "negative": 6 },
+        { "date": "2024-01-05", "positive": 30, "neutral": 10, "negative": 8 }
+      ]
+    },
+    "3": {
+      "topic": { "id": 3, "name": "Кредиты" },
+      "timeline": [
+        { "date": "2024-01-01", "positive": 6, "neutral": 3, "negative": 2 },
+        { "date": "2024-01-02", "positive": 9, "neutral": 4, "negative": 3 },
+        { "date": "2024-01-03", "positive": 13, "neutral": 5, "negative": 4 },
+        { "date": "2024-01-04", "positive": 16, "neutral": 6, "negative": 5 },
+        { "date": "2024-01-05", "positive": 25, "neutral": 9, "negative": 7 }
+      ]
+    },
+    "4": {
+      "topic": { "id": 4, "name": "Вклады" },
+      "timeline": [
+        { "date": "2024-01-01", "positive": 4, "neutral": 2, "negative": 1 },
+        { "date": "2024-01-02", "positive": 7, "neutral": 3, "negative": 2 },
+        { "date": "2024-01-03", "positive": 10, "neutral": 4, "negative": 3 },
+        { "date": "2024-01-04", "positive": 13, "neutral": 5, "negative": 2 },
+        { "date": "2024-01-05", "positive": 18, "neutral": 6, "negative": 4 }
+      ]
+    }
+  },
+  "reviews": {
+    "1": {
+      "filters": {
+        "topic_id": 1,
+        "sentiment": "all",
+        "period": { "from": "2024-01-01", "to": "2024-01-31" }
+      },
+      "pagination": { "page": 1, "limit": 10, "total": 30 },
+      "reviews": [
+        { "id": 1001, "date": "2024-01-01", "sentiment": "positive", "text": "Очень доволен ипотекой, всё оформили быстро!", "region": "Москва" },
+        { "id": 1002, "date": "2024-01-02", "sentiment": "negative", "text": "Огромные очереди в офисе банка.", "region": "Санкт-Петербург" },
+        { "id": 1003, "date": "2024-01-02", "sentiment": "neutral", "text": "Обычный процесс оформления, ничего особенного.", "region": "Казань" },
+        { "id": 1004, "date": "2024-01-03", "sentiment": "positive", "text": "Удобные условия по ипотеке, процент ниже чем в других банках.", "region": "Москва" },
+        { "id": 1005, "date": "2024-01-04", "sentiment": "negative", "text": "Затянули рассмотрение заявки на ипотеку.", "region": "Новосибирск" },
+        { "id": 1006, "date": "2024-01-05", "sentiment": "positive", "text": "Хорошее обслуживание, консультанты помогли.", "region": "Екатеринбург" }
+      ]
+    },
+    "2": {
+      "filters": {
+        "topic_id": 2,
+        "sentiment": "all",
+        "period": { "from": "2024-01-01", "to": "2024-01-31" }
+      },
+      "pagination": { "page": 1, "limit": 10, "total": 40 },
+      "reviews": [
+        { "id": 2001, "date": "2024-01-01", "sentiment": "positive", "text": "Удобное мобильное приложение для карт.", "region": "Москва" },
+        { "id": 2002, "date": "2024-01-02", "sentiment": "neutral", "text": "Карта обычная, ничего нового.", "region": "Казань" },
+        { "id": 2003, "date": "2024-01-03", "sentiment": "negative", "text": "Заблокировали карту без объяснения причин.", "region": "Москва" },
+        { "id": 2004, "date": "2024-01-04", "sentiment": "positive", "text": "Кэшбэк приходит вовремя, доволен.", "region": "Екатеринбург" },
+        { "id": 2005, "date": "2024-01-05", "sentiment": "negative", "text": "Очень долго перевыпускали карту.", "region": "Новосибирск" }
+      ]
+    }
+  }
+}
