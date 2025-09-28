@@ -10,8 +10,9 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="icon" href="./images/favicon-analyt.ico" sizes="any" />
   </head>
+
   <body class="bg-blue-50 min-h-screen">
-    <!-- Header -->
+    <!-- ШАПКА -->
     <header class="bg-them shadow-sm">
       <div
         class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between"
@@ -23,10 +24,10 @@
       </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- ОСНОВНОЙ КОНТЕНТ  -->
     <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Section 1: Topics List -->
+        <!-- СПИСОК ТЕМ  -->
         <div class="lg:col-span-1 bg-them p-6 rounded-lg shadow">
           <h2
             class="topics-title text-lg font-medium mb-4 flex items-center justify-between"
@@ -37,21 +38,21 @@
             </span>
             <button
               id="reset-selection"
-              class="hidden px-3 py-1 text-sm cancel-bytton rounded-md"
+              class="hidden px-3 py-1 text-sm cancel-button rounded-md"
             >
               Отменить выбор
             </button>
           </h2>
+          <!-- Загрузка списка -->
           <div id="topics-loading" class="flex justify-center py-8">
             <div
               class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"
             ></div>
           </div>
+          <!-- Сами темы -->
           <div id="topics-container" class="space-y-3 hidden"></div>
-          <div
-            id="topics-error"
-            class="hidden p-4 bg-red-50 text-red-700 rounded-md"
-          >
+          <!-- Ошибка загрузки -->
+          <div id="topics-error" class="hidden p-4 error-box rounded-md">
             <div class="flex items-center">
               <i data-feather="alert-triangle" class="mr-2"></i>
               <span
@@ -62,7 +63,7 @@
           </div>
         </div>
 
-        <!-- Section 2: Statistics -->
+        <!-- СТАТИСТИКА -->
         <div class="lg:col-span-2 space-y-6">
           <div class="bg-them p-6 rounded-lg shadow">
             <h2
@@ -73,6 +74,7 @@
               Выберите тему для анализа
             </h2>
 
+            <!-- Индикатор загрузки -->
             <div
               id="statistics-loading"
               class="hidden flex justify-center py-8"
@@ -82,30 +84,27 @@
               ></div>
             </div>
 
+            <!-- Контент статистики -->
             <div id="statistics-content" class="hidden relative">
               <div class="mb-6">
-                <h3 class="text-md font-medium text-gray-700 mb-2">
+                <h3 class="text-md font-medium subtitle">
                   Общее количество отзывов
                 </h3>
-                <p id="total-reviews" class="text-3xl font-bold text-gray-900">
+                <p id="total-reviews" class="text-3xl font-bold counter-text">
                   0
                 </p>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                <div class="chart-container relative">
-                  <canvas id="sentimentChart"></canvas>
-                  <!-- Футер с выбором типа диаграммы -->
-                  <div
-                    class="mt-2 bg-white border rounded shadow px-2 py-1 text-xs flex items-center w-max"
-                  >
-                    <label for="chart-type" class="mr-1 text-gray-600"
-                      >Тип диаграммы:</label
-                    >
-                    <select
-                      id="chart-type"
-                      class="border-gray-300 rounded text-sm"
-                    >
+                <!-- График -->
+                <div class="flex flex-col">
+                  <div class="chart-container">
+                    <canvas id="sentimentChart"></canvas>
+                  </div>
+                  <!-- Выбор типа диаграммы -->
+                  <div class="mt-4 chart-footer">
+                    <label for="chart-type" class="mr-1">Тип диаграммы:</label>
+                    <select id="chart-type" class="select-button-style">
                       <option value="pie">Круговая</option>
                       <option value="doughnut">Кольцевая</option>
                       <option value="bar">Столбчатая</option>
@@ -113,190 +112,154 @@
                   </div>
                 </div>
 
+                <!-- Карточки с числами -->
                 <div class="space-y-4">
-                  <div class="sentiment-card bg-green-50 p-4 rounded-lg">
+                  <div class="sentiment-card positive-card p-4 rounded-lg">
                     <div class="flex items-center justify-between">
-                      <h4 class="font-medium text-green-800">Положительные</h4>
-                      <span
-                        id="positive-count"
-                        class="text-xl font-bold text-green-800"
+                      <h4 class="font-medium">Положительные</h4>
+                      <span id="positive-count" class="text-xl font-bold"
                         >0</span
                       >
                     </div>
-                    <div class="w-full bg-green-200 rounded-full h-2.5 mt-2">
+                    <div class="w-full progress-bg mt-2">
                       <div
                         id="positive-bar"
-                        class="bg-green-600 h-2.5 rounded-full"
-                        style="width: 0%"
+                        class="progress-fill positive-bar"
                       ></div>
                     </div>
-                    <p
-                      id="positive-percent"
-                      class="text-sm text-green-600 mt-1"
-                    >
-                      0%
-                    </p>
+                    <p id="positive-percent" class="percent-text">0%</p>
                   </div>
 
-                  <div class="sentiment-card bg-yellow-50 p-4 rounded-lg">
+                  <div class="sentiment-card neutral-card p-4 rounded-lg">
                     <div class="flex items-center justify-between">
-                      <h4 class="font-medium text-yellow-800">Нейтральные</h4>
-                      <span
-                        id="neutral-count"
-                        class="text-xl font-bold text-yellow-800"
+                      <h4 class="font-medium">Нейтральные</h4>
+                      <span id="neutral-count" class="text-xl font-bold"
                         >0</span
                       >
                     </div>
-                    <div class="w-full bg-yellow-200 rounded-full h-2.5 mt-2">
+                    <div class="w-full progress-bg mt-2">
                       <div
                         id="neutral-bar"
-                        class="bg-yellow-400 h-2.5 rounded-full"
-                        style="width: 0%"
+                        class="progress-fill neutral-bar"
                       ></div>
                     </div>
-                    <p
-                      id="neutral-percent"
-                      class="text-sm text-yellow-600 mt-1"
-                    >
-                      0%
-                    </p>
+                    <p id="neutral-percent" class="percent-text">0%</p>
                   </div>
 
-                  <div class="sentiment-card bg-red-50 p-4 rounded-lg">
+                  <div class="sentiment-card negative-card p-4 rounded-lg">
                     <div class="flex items-center justify-between">
-                      <h4 class="font-medium text-red-800">Отрицательные</h4>
-                      <span
-                        id="negative-count"
-                        class="text-xl font-bold text-red-800"
+                      <h4 class="font-medium">Отрицательные</h4>
+                      <span id="negative-count" class="text-xl font-bold"
                         >0</span
                       >
                     </div>
-                    <div class="w-full bg-red-200 rounded-full h-2.5 mt-2">
+                    <div class="w-full progress-bg mt-2">
                       <div
                         id="negative-bar"
-                        class="bg-red-600 h-2.5 rounded-full"
-                        style="width: 0%"
+                        class="progress-fill negative-bar"
                       ></div>
                     </div>
-                    <p id="negative-percent" class="text-sm text-red-600 mt-1">
-                      0%
-                    </p>
+                    <p id="negative-percent" class="percent-text">0%</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div
-              id="statistics-error"
-              class="hidden p-4 bg-red-50 text-red-700 rounded-md"
-            >
+            <!-- Ошибка -->
+            <div id="statistics-error" class="hidden p-4 error-box rounded-md">
               <div class="flex items-center">
                 <i data-feather="alert-triangle" class="mr-2"></i>
                 <span>Не удалось загрузить статистику.</span>
               </div>
             </div>
 
+            <!-- Заглушка -->
             <div
               id="statistics-placeholder"
-              class="text-center py-12 text-gray-500"
+              class="text-center py-12 text-muted"
             >
               <i
                 data-feather="pie-chart"
-                class="mx-auto h-12 w-12 text-gray-400"
+                class="mx-auto h-12 w-12 icon-muted"
               ></i>
-              <h3 class="mt-2 text-sm font-medium text-gray-900">
+              <h3 class="mt-2 text-sm font-medium">
                 Нет данных для отображения
               </h3>
-              <p class="mt-1 text-sm text-gray-500">
-                Выберите тему из списка слева.
-              </p>
+              <p class="mt-1 text-sm">Выберите тему из списка слева.</p>
             </div>
           </div>
 
-          <!-- Section 3: Filters and Trends -->
+          <!-- ФИЛЬТРЫ + ДИНАМИКА  -->
           <div class="bg-them p-6 rounded-lg shadow">
             <h2 class="text-lg font-medium title-color mb-4 flex items-center">
               <i data-feather="filter" class="mr-2 title-color"></i>
               Фильтры и динамика
             </h2>
 
+            <!-- Фильтр по дате -->
             <div class="mb-6">
-              <h3 class="text-md font-medium text-gray-700 mb-3">
-                Фильтр по дате
-              </h3>
+              <h3 class="text-md font-medium subtitle mb-3">Фильтр по дате</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label
-                    for="start-date"
-                    class="block text-sm font-medium text-gray-700 mb-1"
+                  <label for="start-date" class="block text-sm subtitle mb-1"
                     >С</label
                   >
                   <input
                     type="text"
                     id="start-date"
                     placeholder="дд.мм.гггг"
-                    class="block w-full rounded-md border-gray-300 p-2"
-                    pattern="\d{2}\.\d{2}\.\d{4}"
+                    class="input-field"
                   />
                 </div>
                 <div>
-                  <label
-                    for="end-date"
-                    class="block text-sm font-medium text-gray-700 mb-1"
+                  <label for="end-date" class="block text-sm subtitle mb-1"
                     >По</label
                   >
                   <input
                     type="text"
                     id="end-date"
                     placeholder="дд.мм.гггг"
-                    class="block w-full rounded-md border-gray-300 p-2"
-                    pattern="\d{2}\.\d{2}\.\d{4}"
+                    class="input-field"
                   />
                 </div>
               </div>
-              <button
-                id="apply-filters"
-                class="mt-3 px-4 py-2 text-sm rounded-md button"
-              >
+              <button id="apply-filters" class="mt-3 px-4 py-2 text-sm button">
                 Применить фильтры
               </button>
             </div>
 
+            <!-- График динамики -->
             <div>
-              <h3 class="text-md font-medium text-gray-700 mb-3">
+              <h3 class="text-md font-medium subtitle mb-3">
                 Динамика тональности
               </h3>
+              <!-- Загрузка -->
               <div id="trends-loading" class="hidden flex justify-center py-8">
                 <div
                   class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"
                 ></div>
               </div>
+              <!-- Контент -->
               <div id="trends-content" class="hidden">
-                <div class="chart-container">
+                <div class="chart-container trends-bg">
                   <canvas id="trendsChart"></canvas>
                 </div>
               </div>
-              <div
-                id="trends-error"
-                class="hidden p-4 bg-red-50 text-red-700 rounded-md"
-              >
+              <!-- Ошибка -->
+              <div id="trends-error" class="hidden p-4 error-box rounded-md">
                 <div class="flex items-center">
                   <i data-feather="alert-triangle" class="mr-2"></i>
                   <span>Не удалось загрузить данные динамики.</span>
                 </div>
               </div>
-              <div
-                id="trends-placeholder"
-                class="text-center py-12 text-gray-500"
-              >
+              <!-- Заглушка -->
+              <div id="trends-placeholder" class="text-center py-12 text-muted">
                 <i
                   data-feather="trending-up"
-                  class="mx-auto h-12 w-12 text-gray-400"
+                  class="mx-auto h-12 w-12 icon-muted"
                 ></i>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">
-                  График динамики
-                </h3>
-                <p class="mt-1 text-sm text-gray-500">
+                <h3 class="mt-2 text-sm font-medium">График динамики</h3>
+                <p class="mt-1 text-sm">
                   После выбора темы здесь появится график.
                 </p>
               </div>
@@ -304,47 +267,69 @@
           </div>
         </div>
       </div>
-      <!-- Контейнер загрузки JSON -->
+
+      <!--  ЗАГРУЗКА JSON  -->
       <div
         class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 mt-8 bg-them p-6 rounded-lg shadow"
       >
-        <h2 class="text-lg font-medium title-colormb-4 flex items-center">
+        <h2 class="text-lg font-medium title-color mb-4 flex items-center">
           <i data-feather="upload" class="mr-2 title-color"></i>
           Загрузить JSON-файл
         </h2>
-        <div class="flex space-x-4">
-          <input
-            type="file"
-            id="json-file-input"
-            accept=".json"
-            class="border rounded p-2 w-full"
-          />
-          <button id="detach-json" class="detach-button hidden">
-            Открепить JSON
-          </button>
-          <button
-            id="download-btn"
-            class="hidden px-4 py-2 bg-green-500 text-white rounded"
-          >
-            Скачать JSON
-          </button>
+
+        <div class="flex justify-between items-center">
+          <!-- Выбор файла -->
+          <div class="flex space-x-4 items-center">
+            <label
+              for="json-file-input"
+              class="button cursor-pointer text-center px-4 py-2"
+            >
+              Выбрать JSON
+            </label>
+            <span id="json-file-name" class="text-sm text-muted"
+              >Файл еще не выбран</span
+            >
+            <input
+              type="file"
+              id="json-file-input"
+              accept=".json"
+              class="hidden"
+            />
+          </div>
+          <!-- Управление -->
+          <div class="flex space-x-2">
+            <button id="detach-json" class="detach-button hidden cancel-button">
+              Открепить JSON
+            </button>
+            <button id="download-btn" class="hidden download-button">
+              Скачать JSON
+            </button>
+          </div>
         </div>
       </div>
     </main>
 
-    <!-- Reviews Section -->
+    <!-- ОТЗЫВЫ  -->
     <div class="mt-8 bg-them p-6 shadow">
       <h2 class="text-lg font-medium title-color mb-4 flex items-center">
         <i data-feather="message-square" class="mr-2 title-color"></i>
         Отзывы
       </h2>
-      <div id="reviews-loading" class="hidden text-gray-500">
+      <div id="reviews-loading" class="hidden text-muted">
         Загрузка отзывов...
       </div>
-      <div id="reviews-error" class="hidden text-red-500">
+      <div id="reviews-error" class="hidden reviews-error-text">
         Ошибка загрузки отзывов
       </div>
       <div id="reviews-container" class="space-y-4"></div>
+      <div
+        id="reviews-pagination"
+        class="hidden mt-4 flex justify-center items-center space-x-2"
+      >
+        <button id="prev-page" class="pagination-btn">&lt;</button>
+        <span id="current-page" class="pagination-info">1</span>
+        <button id="next-page" class="pagination-btn">&gt;</button>
+      </div>
     </div>
 
     <script src="script.js"></script>
